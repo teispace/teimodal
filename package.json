@@ -1,6 +1,6 @@
 {
   "name": "@teispace/teimodal",
-  "version": "0.1.21",
+  "version": "1.0.0",
   "description": "A beautiful, customizable React modal component",
   "author": "Teispace",
   "license": "MIT",

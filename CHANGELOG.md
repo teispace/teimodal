@@ -1,3 +1,7 @@
+## 1.0.0 (2025-06-01)
+
+* feat: first stable version released ([b951bd4](https://github.com/teispace/teimodal/commit/b951bd4))
+
 ## <small>0.1.21 (2025-06-01)</small>
 
 * fix: commitlint added ([db18551](https://github.com/teispace/teimodal/commit/db18551))
