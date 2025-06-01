@@ -1,3 +1,7 @@
+## <small>1.0.2 (2025-06-01)</small>
+
+* fix: missing tailwinds fix ([a61fe68](https://github.com/teispace/teimodal/commit/a61fe68))
+
 ## <small>1.0.1 (2025-06-01)</small>
 
 * fix: fix build script ([6c8f200](https://github.com/teispace/teimodal/commit/6c8f200))
