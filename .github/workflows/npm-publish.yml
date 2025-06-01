@@ -1,0 +1,106 @@
+# -----------------------------
+# GitHub Actions Workflow: Release Automation
+#
+# This workflow automates:
+# 1. Installing dependencies
+# 2. Running tests
+# 3. Publishing to npm using semantic-release
+#
+# Triggers on push to main, beta, or alpha branches.
+#
+# Jobs:
+#   setup   - Prepares environment, installs dependencies, caches node_modules
+#   test    - Runs tests after setup
+#   release - Publishes to npm and creates GitHub releases after tests
+#
+# Ensure you have set the NPM_TOKEN secret for npm publishing.
+# -----------------------------
+name: Release
+
+on:
+  push:
+    branches:
+      - main      # Production releases
+      - beta      # Beta pre-releases
+      - alpha     # Alpha pre-releases
+
+jobs:
+  setup:
+    name: Setup & Install
+    runs-on: ubuntu-latest
+    outputs:
+      node-modules-cache: ${{ steps.cache.outputs.cache-hit }} # Exposes cache status for downstream jobs
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Fetches repository code
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'      # Specify Node.js version
+          cache: 'npm'            # Enables npm cache for dependencies
+
+      - name: Install dependencies
+        run: npm ci               # Clean install using package-lock.json
+
+      - name: Cache node_modules
+        id: cache
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules      # Cache the node_modules directory
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }} # Unique cache key
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: setup                  # Waits for setup job to finish
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }} # Restore cache
+
+      - name: Run tests
+        run: npm test             # Run your test suite
+
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    needs: test                   # Waits for tests to pass
+    permissions:
+      contents: write             # Needed for creating releases/tags
+      issues: write               # For semantic-release to comment on issues
+      pull-requests: write        # For semantic-release to comment on PRs
+      packages: write             # For npm publishing
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/' # Set npm registry for publishing
+          cache: 'npm'
+
+      - name: Restore node_modules
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # For GitHub API access
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}   # For npm publish authentication
+        run: npx semantic-release                    # Run semantic-release to publish and create releases
